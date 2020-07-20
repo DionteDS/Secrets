@@ -4,7 +4,9 @@ const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 // const encrypt = require("mongoose-encryption");
-const md5 = require("md5");
+// const md5 = require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 const app = express();
 
@@ -45,27 +47,49 @@ app.get("/register", function(req, res) {
 
 app.post("/register", function(req, res) {
 
-    const newUser = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
+
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        // Store hash in your password DB.
+        const newUser = new User({
+            email: req.body.username,
+            password: hash
+        });
+
+        newUser.save(function(err) {
+            if (err) {
+                console.log(err);
+            } else {
+                res.render("secrets");
+            }
+        });
+
     });
+
+
+    //md5 for hash and no md5 for encrypt
+    // const newUser = new User({
+    //     email: req.body.username,
+    //     password: md5(req.body.password)
+    // });
 
     // when we save mongoose will enceypt our password field
 
-    newUser.save(function(err) {
-        if (err) {
-            console.log(err);
-        } else {
-            res.render("secrets");
-        }
-    });
+    // newUser.save(function(err) {
+    //     if (err) {
+    //         console.log(err);
+    //     } else {
+    //         res.render("secrets");
+    //     }
+    // });
 
 });
 
 app.post("/login", function(req, res) {
 
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password
+
+    
 
     // Search for a user in the database that matches the username const
     // Also mongoose will decrypt the password field when we try to find a user
@@ -76,11 +100,19 @@ app.post("/login", function(req, res) {
         } else {
             // Check if that user exist.
             if (foundUser) {
+                // Load hash from your password DB.
+                bcrypt.compare(password, foundUser.password, function(err, result) {
+                    // result == true
+                    if (result === true) {
+                        res.render("secrets");
+                    }
+
+                });
                 // Then check if that user has a password that matches the password const that was typed in
                 // from the login page.
-                if (foundUser.password === password) {
-                    res.render("secrets");
-                }
+                // if (foundUser.password === password) {
+                //     res.render("secrets");
+                // }
             }
         }
     });
