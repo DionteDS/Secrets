@@ -117,7 +117,7 @@ app.get("/register", function(req, res) {
 });
 
 app.get("/secrets", function(req, res) {
-    // Look throught database and find all secrets that have been submitted.
+    // Look through database and find all secrets that have been submitted.
     // Look through all the users in the collection
     // check the secret field and look at the users secret field that is not equal to null
     User.find({"secret": {$ne: null}}, function(err, foundUsers) {
